@@ -12,7 +12,7 @@
 #include <linux/kernel.h>
 #include <asm/segment.h>
 
-#include <string.h>
+#include <string.h> 
 #include <fcntl.h>
 #include <errno.h>
 #include <const.h>
@@ -285,7 +285,7 @@ static struct m_inode * dir_namei(const char * pathname,
 	if (!(dir = get_dir(pathname)))
 		return NULL;
 	basename = pathname;
-	while (c=get_fs_byte(pathname++))
+	while ((c=get_fs_byte(pathname++)))
 		if (c=='/')
 			basename=pathname;
 	*namelen = pathname-basename-1;
