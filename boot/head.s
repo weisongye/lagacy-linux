@@ -1,20 +1,39 @@
-#  head.s contains the 32-bit startup code.
-#  Two L3 task multitasking. The code of tasks are in kernel area, 
-#  just like the Linux. The kernel code is located at 0x10000. 
-SCRN_SEL	= 0x18
+/*
+ *  head.s contains the 32-bit startup code.
+ *  Two L3 task multitasking. The code of tasks are in kernel area, 
+ *  just like the Linux. The kernel code is located at 0x10000. 
+ */
+KRN_BASE 	= 0x10000
 TSS0_SEL	= 0x20
 LDT0_SEL	= 0x28
 TSS1_SEL	= 0X30
 LDT1_SEL	= 0x38
-.global startup_32
+
 .text
 startup_32:
 	movl $0x10,%eax
 	mov %ax,%ds
-#	mov %ax,%es
-	lss init_stack,%esp
+	mov %ax,%es
+	mov %ax,%fs
+	mov %ax,%gs
+	lss stack_ptr,%esp
 
 # setup base fields of descriptors.
+	movl $KRN_BASE, %ebx
+	movl $gdt, %ecx
+	lea tss0, %eax
+	movl $TSS0_SEL, %edi	
+	call set_base
+	lea ldt0, %eax
+	movl $LDT0_SEL, %edi
+	call set_base
+	lea tss1, %eax
+	movl $TSS1_SEL, %edi 
+	call set_base
+	lea ldt1, %eax
+	movl $LDT1_SEL, %edi
+	call set_base
+
 	call setup_idt
 	call setup_gdt
 	movl $0x10,%eax		# reload all the segment registers
@@ -22,7 +41,7 @@ startup_32:
 	mov %ax,%es
 	mov %ax,%fs
 	mov %ax,%gs
-	lss init_stack,%esp
+	lss stack_ptr,%esp
 
 # setup up timer 8253 chip.
 	movb $0x36, %al
@@ -38,7 +57,7 @@ startup_32:
 	movl $0x00080000, %eax	
 	movw $timer_interrupt, %ax
 	movw $0x8E00, %dx
-	movl $0x08, %ecx              # The PC default timer int.
+	movl $0x20, %ecx
 	lea idt(,%ecx,8), %esi
 	movl %eax,(%esi) 
 	movl %edx,4(%esi)
@@ -50,10 +69,10 @@ startup_32:
 	movl %edx,4(%esi)
 
 # unmask the timer interrupt.
-#	movl $0x21, %edx
-#	inb %dx, %al
-#	andb $0xfe, %al
-#	outb %al, %dx
+	movl $0x21, %edx
+	inb %dx, %al
+	andb $0xfe, %al
+	outb %al, %dx
 
 # Move to user mode (task 0)
 	pushfl
@@ -66,7 +85,7 @@ startup_32:
 	movl $0, current
 	sti
 	pushl $0x17
-	pushl $init_stack
+	pushl $stack0_ptr
 	pushfl
 	pushl $0x0f
 	pushl $task0
@@ -93,14 +112,25 @@ rp_sidt:
 	lidt lidt_opcode
 	ret
 
-# -----------------------------------
+# in: %eax - logic addr; %ebx = base addr ; 
+# %ecx - table addr; %edi - descriptors offset.
+set_base:
+	addl %ebx, %eax
+	addl %ecx, %edi
+	movw %ax, 2(%edi)
+	rorl $16, %eax
+	movb %al, 4(%edi)
+	movb %ah, 7(%edi)
+	rorl $16, %eax
+	ret
+
 write_char:
 	push %gs
 	pushl %ebx
-#	pushl %eax
-	mov $SCRN_SEL, %ebx
+	pushl %eax
+	mov $0x18, %ebx
 	mov %bx, %gs
-	movl scr_loc, %ebx
+	movw scr_loc, %bx
 	shl $1, %ebx
 	movb %al, %gs:(%ebx)
 	shr $1, %ebx
@@ -109,7 +139,7 @@ write_char:
 	jb 1f
 	movl $0, %ebx
 1:	movl %ebx, scr_loc	
-#	popl %eax
+	popl %eax
 	popl %ebx
 	pop %gs
 	ret
@@ -132,6 +162,9 @@ ignore_int:
 .align 2
 timer_interrupt:
 	push %ds
+	pushl %edx
+	pushl %ecx
+	pushl %ebx
 	pushl %eax
 	movl $0x10, %eax
 	mov %ax, %ds
@@ -146,6 +179,9 @@ timer_interrupt:
 1:	movl $0, current
 	ljmp $TSS0_SEL, $0
 2:	popl %eax
+	popl %ebx
+	popl %ecx
+	popl %edx
 	pop %ds
 	iret
 
@@ -172,85 +208,105 @@ current:.long 0
 scr_loc:.long 0
 
 .align 2
+.word 0
 lidt_opcode:
 	.word 256*8-1		# idt contains 256 entries
-	.long idt		# This will be rewrite by code. 
+	.long idt + KRN_BASE	# This will be rewrite by code. 
+.align 2
+.word 0
 lgdt_opcode:
 	.word (end_gdt-gdt)-1	# so does gdt 
-	.long gdt		# This will be rewrite by code.
+	.long gdt + KRN_BASE	# This will be rewrite by code.
 
 	.align 8
 idt:	.fill 256,8,0		# idt is uninitialized
 
 gdt:	.quad 0x0000000000000000	/* NULL descriptor */
-	.quad 0x00c09a00000007ff	/* 8Mb 0x08, base = 0x00000 */
-	.quad 0x00c09200000007ff	/* 8Mb 0x10 */
+	.quad 0x00c09a01000007ff	/* 8Mb 0x08, base = 0x10000 */
+	.quad 0x00c09201000007ff	/* 8Mb 0x10 */
 	.quad 0x00c0920b80000002	/* screen 0x18 - for display */
 
-	.word 0x0068, tss0, 0xe900, 0x0	# TSS0 descr 0x20
-	.word 0x0040, ldt0, 0xe200, 0x0	# LDT0 descr 0x28
-	.word 0x0068, tss1, 0xe900, 0x0	# TSS1 descr 0x30
-	.word 0x0040, ldt1, 0xe200, 0x0	# LDT1 descr 0x38
+	.quad 0x0000e90100000068	# TSS0 descr 0x20
+	.quad 0x0000e20100000040	# LDT0 descr 0x28
+	.quad 0x0000e90100000068	# TSS1 descr 0x30
+	.quad 0x0000e20100000040	# LDT1 descr 0x38
 end_gdt:
 	.fill 128,4,0
-init_stack:                          # Will be used as user stack for task0.
-	.long init_stack
+stack_ptr:
+	.long stack_ptr
 	.word 0x10
 
 /*************************************/
 .align 8
 ldt0:	.quad 0x0000000000000000
-	.quad 0x00c0fa00000003ff	# 0x0f, base = 0x00000
-	.quad 0x00c0f200000003ff	# 0x17
-
-tss0:	.long 0 			/* back link */
-	.long krn_stk0, 0x10		/* esp0, ss0 */
-	.long 0, 0, 0, 0, 0		/* esp1, ss1, esp2, ss2, cr3 */
-	.long 0, 0, 0, 0, 0		/* eip, eflags, eax, ecx, edx */
-	.long 0, 0, 0, 0, 0		/* ebx esp, ebp, esi, edi */
-	.long 0, 0, 0, 0, 0, 0 		/* es, cs, ss, ds, fs, gs */
-	.long LDT0_SEL, 0x8000000	/* ldt, trace bitmap */
+	.quad 0x00c0fa01000003ff	# 0x0f, base = 0x10000
+	.quad 0x00c0f201000003ff	# 0x17
+tss0:
+	.long 0 			/* back link */
+	.long stack0_krn_ptr, 0x10	/* esp0, ss0 */
+	.long 0, 0			/* esp1, ss1 */
+	.long 0, 0			/* esp2, ss2 */
+	.long 0				/* cr3 */
+	.long task0			/* eip */
+	.long 0x200			/* eflags */
+	.long 0, 0, 0, 0		/* eax, ecx, edx, ebx */
+	.long stack0_ptr, 0, 0, 0	/* esp, ebp, esi, edi */
+	.long 0x17,0x0f,0x17,0x17,0x17,0x17 /* es, cs, ss, ds, fs, gs */
+	.long LDT0_SEL			/* ldt */
+	.long 0x8000000			/* trace bitmap */
 
 	.fill 128,4,0
-krn_stk0:
-#	.long 0
+stack0_krn_ptr:
+	.long 0
 
 /************************************/
 .align 8
 ldt1:	.quad 0x0000000000000000
-	.quad 0x00c0fa00000003ff	# 0x0f, base = 0x00000
-	.quad 0x00c0f200000003ff	# 0x17
-
-tss1:	.long 0 			/* back link */
-	.long krn_stk1, 0x10		/* esp0, ss0 */
-	.long 0, 0, 0, 0, 0		/* esp1, ss1, esp2, ss2, cr3 */
-	.long task1, 0x200		/* eip, eflags */
+	.quad 0x00c0fa01000003ff	# 0x0f, base = 0x10000
+	.quad 0x00c0f201000003ff	# 0x17
+tss1:
+	.long 0 			/* back link */
+	.long stack1_krn_ptr, 0x10	/* esp0, ss0 */
+	.long 0, 0			/* esp1, ss1 */
+	.long 0, 0			/* esp2, ss2 */
+	.long 0				/* cr3 */
+	.long task1			/* eip */
+	.long 0x200			/* eflags */
 	.long 0, 0, 0, 0		/* eax, ecx, edx, ebx */
-	.long usr_stk1, 0, 0, 0		/* esp, ebp, esi, edi */
+	.long stack1_ptr, 0, 0, 0	/* esp, ebp, esi, edi */
 	.long 0x17,0x0f,0x17,0x17,0x17,0x17 /* es, cs, ss, ds, fs, gs */
-	.long LDT1_SEL, 0x8000000	/* ldt, trace bitmap */
+	.long LDT1_SEL			/* ldt */
+	.long 0x8000000			/* trace bitmap */
 
 	.fill 128,4,0
-krn_stk1:
+stack1_krn_ptr:
+	.long 0
 
 /************************************/
 task0:
 	movl $0x17, %eax
 	movw %ax, %ds
-	movb $65, %al              /* print 'A' */
+	mov $65, %al              /* print 'A' */
 	int $0x80
 	movl $0xfff, %ecx
 1:	loop 1b
 	jmp task0 
 
+	.fill 128,4,0
+stack0_ptr:
+	.long 0
+
 task1:
 	movl $0x17, %eax
 	movw %ax, %ds
-	movb $66, %al              /* print 'B' */
+	mov $66, %al              /* print 'B' */
 	int $0x80
 	movl $0xfff, %ecx
 1:	loop 1b
 	jmp task1
 
 	.fill 128,4,0 
-usr_stk1:
+stack1_ptr:
+	.long 0
+
+/*** end ***/
