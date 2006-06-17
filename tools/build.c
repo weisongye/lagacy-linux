@@ -25,9 +25,11 @@
 #include <stdlib.h>	/* contains exit */
 #include <sys/types.h>	/* unistd.h needs this */
 #include <sys/stat.h>
-#include <linux/fs.h>
 #include <unistd.h>	/* contains read/write */
 #include <fcntl.h>
+
+#define MAJOR(a) (((unsigned)(a))>>8)
+#define MINOR(a) ((a)&0xff)
 
 #define MINIX_HEADER 32
 #define GCC_HEADER 1024
