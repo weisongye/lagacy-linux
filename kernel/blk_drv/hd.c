@@ -21,6 +21,7 @@
 #include <asm/system.h>
 #include <asm/io.h>
 #include <asm/segment.h>
+#include <errno.h>
 
 #define MAJOR_NR 3
 #include "blk.h"
@@ -69,6 +70,7 @@ __asm__("cld;rep;outsw"::"d" (port),"S" (buf),"c" (nr):"cx","si")
 
 extern void hd_interrupt(void);
 extern void rd_load(void);
+extern init_swapping(void);
 
 /* This may be used only once, enforced by 'static int callable' */
 int sys_setup(void * BIOS)
@@ -169,7 +171,7 @@ static int controller_ready(void)
 {
 	int retries = 100000;
 
-	while (--retries && (inb_p(HD_STATUS)&0xc0)!=0x40);
+	while (--retries && (inb_p(HD_STATUS)&0x80)); /* &0xc0)!=0x40 */
 	return (retries);
 }
 
@@ -382,3 +384,28 @@ void hd_init(void)
 	outb_p(inb_p(0x21)&0xfb,0x21);
 	outb(inb_p(0xA1)&0xbf,0xA1);
 }
+
+int hd_ioctl(int dev, int cmd, int arg)
+{
+	struct hd_geometry *loc = (void *) arg;
+
+	if (!loc)
+		return -EINVAL;
+	dev = MINOR(dev) >> 6;
+	if (dev >= NR_HD)
+		return -EINVAL;
+
+	switch (cmd) {
+		case HDIO_REQ:
+			put_fs_byte(hd_info[dev].head,
+				(char *) &loc->heads);
+			put_fs_byte(hd_info[dev].sect,
+				(char *) &loc->sectors);
+			put_fs_word(hd_info[dev].cyl,
+				(short *) &loc->cylinders);
+			return 0;
+		default:
+			return -EINVAL;
+	}
+}
+

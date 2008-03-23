@@ -12,7 +12,7 @@ LD	=gld
 LDFLAGS	=-s -x
 CC	=gcc
 CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer -fcombine-regs \
-	-finline-functions -mstring-insns -nostdinc -I../include
+	-finline-functions -nostdinc -I../include
 CPP	=gcc -E -nostdinc -I../include
 
 .c.s:
@@ -31,6 +31,9 @@ OBJS  = sched.o sys_call.o traps.o asm.o fork.o \
 kernel.o: $(OBJS)
 	$(LD) -r -o kernel.o $(OBJS)
 	sync
+
+sched.o: sched.c
+	$(CC) $(CFLAGS) -fno-omit-frame-pointer -c $<
 
 clean:
 	rm -f core *.o *.a tmp_make keyboard.s

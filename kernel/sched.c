@@ -321,10 +321,42 @@ void add_timer(long jiffies, void (*fn)(void))
 	sti();
 }
 
+/* gohigh 2004.3.14 */
+unsigned long avenrun[3] = { 0,0,0 };
+
+/*
+ * Nr of active tasks - counted in fixed - point numbers
+ */
+static unsigned long count_active_tasks(void)
+{
+	struct task_struct **p;
+	unsigned long nr = 0;
+
+	for (p = &LAST_TASK; p> &FIRST_TASK; --p)
+		if (*p && (*p)->state == TASK_RUNNING)
+			nr += FIXED_1;
+	return nr;
+}
+
+static inline void calc_load(void)
+{
+	unsigned long active_tasks;  /* fixed-point */
+	static int count = LOAD_FREQ;
+
+	if (count-- > 0)
+		return;
+	count = LOAD_FREQ;
+	active_tasks = count_active_tasks();
+	CALC_LOAD(avenrun[0], EXP_1, active_tasks);
+	CALC_LOAD(avenrun[1], EXP_5, active_tasks);
+	CALC_LOAD(avenrun[2], EXP_15, active_tasks);
+}
+
 void do_timer(long cpl)
 {
 	static int blanked = 0;
 
+	calc_load();
 	if (blankcount || !blankinterval) {
 		if (blanked)
 			unblank_screen();

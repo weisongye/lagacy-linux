@@ -130,7 +130,7 @@ int swap_out(void)
 	static int dir_entry = FIRST_VM_PAGE>>10;
 	static int page_entry = -1;
 	int counter = VM_PAGES;
-	int pg_table;
+	int pg_table = 0, d_entry;
 
 	while (counter>0) {
 		pg_table = pg_dir[dir_entry];
@@ -141,6 +141,7 @@ int swap_out(void)
 		if (dir_entry >= 1024)
 			dir_entry = FIRST_VM_PAGE>>10;
 	}
+	d_entry = dir_entry;
 	pg_table &= 0xfffff000;
 	while (counter-- > 0) {
 		page_entry++;
@@ -158,8 +159,10 @@ int swap_out(void)
 					break;
 			pg_table &= 0xfffff000;
 		}
-		if (try_to_swap_out(page_entry + (unsigned long *) pg_table))
+		if (try_to_swap_out(page_entry + (unsigned long *) pg_table)) {
+			--task[d_entry >> 4]->rss;
 			return 1;
+		}
 	}
 	printk("Out of swap-memory\n\r");
 	return 0;

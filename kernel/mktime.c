@@ -42,7 +42,7 @@ long kernel_mktime(struct tm * tm)
 {
 	long res;
 	int year;
-
+	if (tm->tm_year<70) tm->tm_year += 100; 
 	year = tm->tm_year - 70;
 /* magic offsets (y+1) needed to get leapyears right.*/
 	res = YEAR*year + DAY*((year+1)/4);

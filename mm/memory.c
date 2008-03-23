@@ -146,6 +146,7 @@ int copy_page_tables(unsigned long from,unsigned long to,long size)
 			if (!(1 & this_page)) {
 				if (!(new_page = get_free_page()))
 					return -1;
+				++current->rss;
 				read_swap_page(this_page>>1, (char *) new_page);
 				*to_page_table = this_page;
 				*from_page_table = new_page | (PAGE_DIRTY | 7);
@@ -265,6 +266,7 @@ void do_wp_page(unsigned long error_code,unsigned long address)
 	if (CODE_SPACE(address))
 		do_exit(SIGSEGV);
 #endif
+	++current->min_flt;
 	un_wp_page((unsigned long *)
 		(((address>>10) & 0xffc) + (0xfffff000 &
 		*((unsigned long *) ((address>>20) &0xffc)))));
@@ -299,8 +301,7 @@ void get_empty_page(unsigned long address)
  * to see if it exists, and if it is clean. If so, share it with the current
  * task.
  *
- * NOTE! This assumes we have checked that p != current, and that they
- * share the same executable or library.
+ * NOTE! This assumes we have checked that p != current, and that they * share the same executable or library.
  */
 static int try_to_share(unsigned long address, struct task_struct * p)
 {
@@ -385,6 +386,9 @@ void do_no_page(unsigned long error_code,unsigned long address)
 	unsigned long page;
 	int block,i;
 	struct m_inode * inode;
+	struct task_struct *tsk;
+
+	tsk = current ;
 
 	if (address < TASK_SIZE)
 		printk("\n\rBAD!! KERNEL PAGE MISSING\n\r");
@@ -392,12 +396,14 @@ void do_no_page(unsigned long error_code,unsigned long address)
 		printk("Bad things happen: nonexistent page error in do_no_page\n\r");
 		do_exit(SIGSEGV);
 	}
+	++tsk->rss;
 	page = *(unsigned long *) ((address >> 20) & 0xffc);
 	if (page & 1) {
 		page &= 0xfffff000;
 		page += (address >> 10) & 0xffc;
 		tmp = *(unsigned long *) page;
 		if (tmp && !(1 & tmp)) {
+			++tsk->maj_flt;
 			swap_in((unsigned long *) page);
 			return;
 		}
@@ -415,11 +421,19 @@ void do_no_page(unsigned long error_code,unsigned long address)
 		block = 0;
 	}
 	if (!inode) {
+		++tsk->min_flt;
+		if (tmp > tsk->brk && tsk == current &&
+			LIBRARY_OFFSET -tmp > tsk->rlim[RLIMIT_STACK].rlim_max)
+				do_exit(SIGSEGV);
 		get_empty_page(address);
 		return;
 	}
-	if (share_page(inode,tmp))
-		return;
+	if (tsk == current)
+		if (share_page(inode,tmp)) {
+			++tsk->min_flt;
+			return;
+		}
+	++tsk->maj_flt;
 	if (!(page = get_free_page()))
 		oom();
 /* remember that 1 block is used for header */

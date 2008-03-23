@@ -25,30 +25,34 @@ extern int file_write(struct m_inode * inode, struct file * filp,
 int sys_lseek(unsigned int fd,off_t offset, int origin)
 {
 	struct file * file;
-	int tmp;
+	int tmp, mem_dev;
 
 	if (fd >= NR_OPEN || !(file=current->filp[fd]) || !(file->f_inode)
 	   || !IS_SEEKABLE(MAJOR(file->f_inode->i_dev)))
 		return -EBADF;
 	if (file->f_inode->i_pipe)
 		return -ESPIPE;
+	mem_dev = S_ISCHR(file->f_inode->i_mode);
+
 	switch (origin) {
 		case 0:
-			if (offset<0) return -EINVAL;
+			if (offset<0 && !mem_dev) return -EINVAL;
 			file->f_pos=offset;
 			break;
 		case 1:
-			if (file->f_pos+offset<0) return -EINVAL;
+			if ((file->f_pos+offset<0) && !mem_dev) return -EINVAL;
 			file->f_pos += offset;
 			break;
 		case 2:
-			if ((tmp=file->f_inode->i_size+offset) < 0)
+			if (((tmp=file->f_inode->i_size+offset) < 0) && !mem_dev)
 				return -EINVAL;
 			file->f_pos = tmp;
 			break;
 		default:
 			return -EINVAL;
 	}
+	if (mem_dev && file->f_pos < 0)
+		return 0;
 	return file->f_pos;
 }
 

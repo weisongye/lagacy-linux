@@ -116,11 +116,14 @@ static long buffer_memory_end = 0;
 static long main_memory_start = 0;
 static char term[32];
 
+static char * argv_init[] = { "/etc/init", NULL };
+static char * envp_init[] = { "HOME=/", NULL,NULL };
+
 static char * argv_rc[] = { "/bin/sh", NULL };
 static char * envp_rc[] = { "HOME=/", NULL ,NULL };
 
 static char * argv[] = { "-/bin/sh",NULL };
-static char * envp[] = { "HOME=/usr/root", NULL, NULL };
+static char * envp[] = { "HOME=/root", NULL, NULL };
 
 struct drive_info { char dummy[32]; } drive_info;
 
@@ -135,6 +138,7 @@ void main(void)		/* This really IS void, no error here. */
 	sprintf(term, "TERM=con%dx%d", CON_COLS, CON_ROWS);
 	envp[1] = term;	
 	envp_rc[1] = term;
+	envp_init[1] = term;
  	drive_info = DRIVE_INFO;
 	memory_end = (1<<20) + (EXT_MEM_K<<10);
 	memory_end &= 0xfffff000;
@@ -198,6 +202,9 @@ void init(void)
 	printf("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
 	printf("Free mem: %d bytes\n\r",memory_end-main_memory_start);
+
+	execve("/etc/init", argv_init,envp_init); /* if fail, go orignal */
+
 	if (!(pid=fork())) {
 		close(0);
 		if (open("/etc/rc",O_RDONLY,0))

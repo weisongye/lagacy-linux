@@ -9,10 +9,11 @@ LD86	=ld86 -0
 
 AS	=gas
 LD	=gld
-LDFLAGS	=-s -x -M
+#LDFLAGS	=-s -x -M
+LDFLAGS = -M
 CC	=gcc $(RAMDISK)
 CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer \
--fcombine-regs -mstring-insns
+-fcombine-regs 
 CPP	=cpp -nostdinc -Iinclude
 
 #
@@ -20,8 +21,8 @@ CPP	=cpp -nostdinc -Iinclude
 # This can be either FLOPPY, /dev/xxxx or empty, in which case the
 # default of /dev/hd6 is used by 'build'.
 #
-ROOT_DEV=/dev/hd6
-SWAP_DEV=/dev/hd2
+ROOT_DEV=/dev/hd1
+SWAP_DEV=/dev/hd4
 
 ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
 DRIVERS =kernel/blk_drv/blk_drv.a kernel/chr_drv/chr_drv.a
@@ -40,8 +41,11 @@ LIBS	=lib/lib.a
 all:	Image
 
 Image: boot/bootsect boot/setup tools/system tools/build
-	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
+	cp -f tools/system system.tmp
+	strip system.tmp
+	tools/build boot/bootsect boot/setup system.tmp $(ROOT_DEV) \
 		$(SWAP_DEV) > Image
+	rm -f system.tmp
 	sync
 
 disk: Image
