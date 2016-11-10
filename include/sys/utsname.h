@@ -6,12 +6,12 @@
 
 struct utsname {
 	char sysname[9];
-	char nodename[MAXHOSTNAMELEN+1];
+	char nodename[MAXHOSTNAMELEN + 1];
 	char release[9];
 	char version[9];
 	char machine[9];
 };
 
-extern int uname(struct utsname * utsbuf);
+extern int uname(struct utsname *utsbuf);
 
 #endif

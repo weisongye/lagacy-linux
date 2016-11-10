@@ -16,7 +16,7 @@
 
 static char buf[1024];
 
-extern int vsprintf(char * buf, const char * fmt, va_list args);
+extern int vsprintf(char *buf, const char *fmt, va_list args);
 
 int printk(const char *fmt, ...)
 {
@@ -24,7 +24,7 @@ int printk(const char *fmt, ...)
 	int i;
 
 	va_start(args, fmt);
-	i=vsprintf(buf,fmt,args);
+	i = vsprintf(buf, fmt, args);
 	va_end(args);
 	console_print(buf);
 	return i;

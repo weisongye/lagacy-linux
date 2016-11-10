@@ -45,22 +45,22 @@ struct winsize {
 
 #define NCC 8
 struct termio {
-	unsigned short c_iflag;		/* input mode flags */
-	unsigned short c_oflag;		/* output mode flags */
-	unsigned short c_cflag;		/* control mode flags */
-	unsigned short c_lflag;		/* local mode flags */
-	unsigned char c_line;		/* line discipline */
+	unsigned short c_iflag;	/* input mode flags */
+	unsigned short c_oflag;	/* output mode flags */
+	unsigned short c_cflag;	/* control mode flags */
+	unsigned short c_lflag;	/* local mode flags */
+	unsigned char c_line;	/* line discipline */
 	unsigned char c_cc[NCC];	/* control characters */
 };
 
 #define NCCS 17
 struct termios {
-	tcflag_t c_iflag;		/* input mode flags */
-	tcflag_t c_oflag;		/* output mode flags */
-	tcflag_t c_cflag;		/* control mode flags */
-	tcflag_t c_lflag;		/* local mode flags */
-	cc_t c_line;			/* line discipline */
-	cc_t c_cc[NCCS];		/* control characters */
+	tcflag_t c_iflag;	/* input mode flags */
+	tcflag_t c_oflag;	/* output mode flags */
+	tcflag_t c_cflag;	/* control mode flags */
+	tcflag_t c_lflag;	/* local mode flags */
+	cc_t c_line;		/* line discipline */
+	cc_t c_cc[NCCS];	/* control characters */
 };
 
 /* c_cc characters */
@@ -162,8 +162,8 @@ struct termios {
 #define PARODD	0001000
 #define HUPCL	0002000
 #define CLOCAL	0004000
-#define CIBAUD	03600000		/* input baud rate (not used) */
-#define CRTSCTS	020000000000		/* flow control */
+#define CIBAUD	03600000	/* input baud rate (not used) */
+#define CRTSCTS	020000000000	/* flow control */
 
 /* c_lflag bits */
 #define ISIG	0000001
@@ -221,6 +221,6 @@ extern int tcflush(int fildes, int queue_selector);
 extern int tcgetattr(int fildes, struct termios *termios_p);
 extern int tcsendbreak(int fildes, int duration);
 extern int tcsetattr(int fildes, int optional_actions,
-	struct termios *termios_p);
+		     struct termios *termios_p);
 
 #endif

@@ -3,13 +3,13 @@
 
 /* gettimofday returns this */
 struct timeval {
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* microseconds */
+	long tv_sec;		/* seconds */
+	long tv_usec;		/* microseconds */
 };
 
 struct timezone {
-	int	tz_minuteswest;	/* minutes west of Greenwich */
-	int	tz_dsttime;	/* type of dst correction */
+	int tz_minuteswest;	/* minutes west of Greenwich */
+	int tz_dsttime;		/* type of dst correction */
 };
 
 #define	DST_NONE	0	/* not on dst */
@@ -48,16 +48,16 @@ struct timezone {
 #define	ITIMER_VIRTUAL	1
 #define	ITIMER_PROF	2
 
-struct	itimerval {
-	struct	timeval it_interval;	/* timer interval */
-	struct	timeval it_value;	/* current value */
+struct itimerval {
+	struct timeval it_interval;	/* timer interval */
+	struct timeval it_value;	/* current value */
 };
 
 #include <time.h>
 #include <sys/types.h>
 
-int gettimeofday(struct timeval * tp, struct timezone * tz);
+int gettimeofday(struct timeval *tp, struct timezone *tz);
 int select(int width, fd_set * readfds, fd_set * writefds,
-	fd_set * exceptfds, struct timeval * timeout);
+	   fd_set * exceptfds, struct timeval *timeout);
 
 #endif /*_SYS_TIME_H*/

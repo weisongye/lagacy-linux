@@ -39,8 +39,12 @@ typedef unsigned long tcflag_t;
 
 typedef unsigned long fd_set;
 
-typedef struct { int quot,rem; } div_t;
-typedef struct { long quot,rem; } ldiv_t;
+typedef struct {
+	int quot, rem;
+} div_t;
+typedef struct {
+	long quot, rem;
+} ldiv_t;
 
 struct ustat {
 	daddr_t f_tfree;

@@ -35,26 +35,26 @@
  */
 
 typedef struct {
-	struct task_struct * old_task;
-	struct task_struct ** wait_address;
+	struct task_struct *old_task;
+	struct task_struct **wait_address;
 } wait_entry;
 
 typedef struct {
 	int nr;
-	wait_entry entry[NR_OPEN*3];
+	wait_entry entry[NR_OPEN * 3];
 } select_table;
 
-static void add_wait(struct task_struct ** wait_address, select_table * p)
+static void add_wait(struct task_struct **wait_address, select_table * p)
 {
 	int i;
 
 	if (!wait_address)
 		return;
-	for (i = 0 ; i < p->nr ; i++)
+	for (i = 0; i < p->nr; i++)
 		if (p->entry[i].wait_address == wait_address)
 			return;
 	p->entry[p->nr].wait_address = wait_address;
-	p->entry[p->nr].old_task = * wait_address;
+	p->entry[p->nr].old_task = *wait_address;
 	*wait_address = current;
 	p->nr++;
 }
@@ -62,9 +62,9 @@ static void add_wait(struct task_struct ** wait_address, select_table * p)
 static void free_wait(select_table * p)
 {
 	int i;
-	struct task_struct ** tpp;
+	struct task_struct **tpp;
 
-	for (i = 0; i < p->nr ; i++) {
+	for (i = 0; i < p->nr; i++) {
 		tpp = p->entry[i].wait_address;
 		while (*tpp && *tpp != current) {
 			(*tpp)->state = 0;
@@ -79,7 +79,7 @@ static void free_wait(select_table * p)
 	p->nr = 0;
 }
 
-static struct tty_struct * get_tty(struct m_inode * inode)
+static struct tty_struct *get_tty(struct m_inode *inode)
 {
 	int major, minor;
 
@@ -100,9 +100,9 @@ static struct tty_struct * get_tty(struct m_inode * inode)
  * The check_XX functions check out a file. We know it's either
  * a pipe, a character device or a fifo (fifo's not implemented)
  */
-static int check_in(select_table * wait, struct m_inode * inode)
+static int check_in(select_table * wait, struct m_inode *inode)
 {
-	struct tty_struct * tty;
+	struct tty_struct *tty;
 
 	if (tty = get_tty(inode))
 		if (!EMPTY(tty->secondary))
@@ -117,9 +117,9 @@ static int check_in(select_table * wait, struct m_inode * inode)
 	return 0;
 }
 
-static int check_out(select_table * wait, struct m_inode * inode)
+static int check_out(select_table * wait, struct m_inode *inode)
 {
-	struct tty_struct * tty;
+	struct tty_struct *tty;
 
 	if (tty = get_tty(inode))
 		if (!FULL(tty->write_q))
@@ -134,9 +134,9 @@ static int check_out(select_table * wait, struct m_inode * inode)
 	return 0;
 }
 
-static int check_ex(select_table * wait, struct m_inode * inode)
+static int check_ex(select_table * wait, struct m_inode *inode)
 {
-	struct tty_struct * tty;
+	struct tty_struct *tty;
 
 	if (tty = get_tty(inode))
 		if (!FULL(tty->write_q))
@@ -147,12 +147,12 @@ static int check_ex(select_table * wait, struct m_inode * inode)
 		if (inode->i_count < 2)
 			return 1;
 		else
-			add_wait(&inode->i_wait,wait);
+			add_wait(&inode->i_wait, wait);
 	return 0;
 }
 
 int do_select(fd_set in, fd_set out, fd_set ex,
-	fd_set *inp, fd_set *outp, fd_set *exp)
+	      fd_set * inp, fd_set * outp, fd_set * exp)
 {
 	int count;
 	select_table wait_table;
@@ -160,7 +160,7 @@ int do_select(fd_set in, fd_set out, fd_set ex,
 	fd_set mask;
 
 	mask = in | out | ex;
-	for (i = 0 ; i < NR_OPEN ; i++,mask >>= 1) {
+	for (i = 0; i < NR_OPEN; i++, mask >>= 1) {
 		if (!(mask & 1))
 			continue;
 		if (!current->filp[i])
@@ -180,19 +180,19 @@ repeat:
 	*inp = *outp = *exp = 0;
 	count = 0;
 	mask = 1;
-	for (i = 0 ; i < NR_OPEN ; i++, mask += mask) {
+	for (i = 0; i < NR_OPEN; i++, mask += mask) {
 		if (mask & in)
-			if (check_in(&wait_table,current->filp[i]->f_inode)) {
+			if (check_in(&wait_table, current->filp[i]->f_inode)) {
 				*inp |= mask;
 				count++;
 			}
 		if (mask & out)
-			if (check_out(&wait_table,current->filp[i]->f_inode)) {
+			if (check_out(&wait_table, current->filp[i]->f_inode)) {
 				*outp |= mask;
 				count++;
 			}
 		if (mask & ex)
-			if (check_ex(&wait_table,current->filp[i]->f_inode)) {
+			if (check_ex(&wait_table, current->filp[i]->f_inode)) {
 				*exp |= mask;
 				count++;
 			}
@@ -213,7 +213,7 @@ repeat:
  * parameters. Sad, but there you are. We could do some tweaking in
  * the library function ...
  */
-int sys_select( unsigned long *buffer )
+int sys_select(unsigned long *buffer)
 {
 /* Perform the select(nd, in, out, ex, tv) system call. */
 	int i;
@@ -228,7 +228,7 @@ int sys_select( unsigned long *buffer )
 	inp = (fd_set *) get_fs_long(buffer++);
 	outp = (fd_set *) get_fs_long(buffer++);
 	exp = (fd_set *) get_fs_long(buffer++);
-	tvp = (struct timeval *) get_fs_long(buffer);
+	tvp = (struct timeval *)get_fs_long(buffer);
 
 	if (inp)
 		in = mask & get_fs_long(inp);
@@ -238,7 +238,9 @@ int sys_select( unsigned long *buffer )
 		ex = mask & get_fs_long(exp);
 	timeout = 0xffffffff;
 	if (tvp) {
-		timeout = get_fs_long((unsigned long *)&tvp->tv_usec)/(1000000/HZ);
+		timeout =
+		    get_fs_long((unsigned long *)&tvp->tv_usec) / (1000000 /
+								   HZ);
 		timeout += get_fs_long((unsigned long *)&tvp->tv_sec) * HZ;
 		timeout += jiffies;
 	}
@@ -255,22 +257,22 @@ int sys_select( unsigned long *buffer )
 		return i;
 	if (inp) {
 		verify_area(inp, 4);
-		put_fs_long(res_in,inp);
+		put_fs_long(res_in, inp);
 	}
 	if (outp) {
-		verify_area(outp,4);
-		put_fs_long(res_out,outp);
+		verify_area(outp, 4);
+		put_fs_long(res_out, outp);
 	}
 	if (exp) {
-		verify_area(exp,4);
-		put_fs_long(res_ex,exp);
+		verify_area(exp, 4);
+		put_fs_long(res_ex, exp);
 	}
 	if (tvp) {
 		verify_area(tvp, sizeof(*tvp));
-		put_fs_long(timeout/HZ, (unsigned long *) &tvp->tv_sec);
+		put_fs_long(timeout / HZ, (unsigned long *)&tvp->tv_sec);
 		timeout %= HZ;
-		timeout *= (1000000/HZ);
-		put_fs_long(timeout, (unsigned long *) &tvp->tv_usec);
+		timeout *= (1000000 / HZ);
+		put_fs_long(timeout, (unsigned long *)&tvp->tv_usec);
 	}
 	if (!i && (current->signal & ~current->blocked))
 		return -EINTR;

@@ -12,7 +12,7 @@ extern int SWAP_DEV;
 #define write_swap_page(nr,buffer) ll_rw_page(WRITE,SWAP_DEV,(nr),(buffer));
 
 extern unsigned long get_free_page(void);
-extern unsigned long put_dirty_page(unsigned long page,unsigned long address);
+extern unsigned long put_dirty_page(unsigned long page, unsigned long address);
 extern void free_page(unsigned long addr);
 void swap_free(int page_nr);
 void swap_in(unsigned long *table_ptr);
@@ -34,7 +34,7 @@ extern unsigned long HIGH_MEMORY;
 #define MAP_NR(addr) (((addr)-LOW_MEM)>>12)
 #define USED 100
 
-extern unsigned char mem_map [ PAGING_PAGES ];
+extern unsigned char mem_map[PAGING_PAGES];
 
 #define PAGE_DIRTY	0x40
 #define PAGE_ACCESSED	0x20

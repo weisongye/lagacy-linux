@@ -21,7 +21,7 @@
  * The timezone where the local system is located.  Used as a default by some
  * programs who obtain this value by using gettimeofday.
  */
-struct timezone sys_tz = { 0, 0};
+struct timezone sys_tz = { 0, 0 };
 
 extern int session_of_pgrp(int pgrp);
 
@@ -49,6 +49,7 @@ int sys_gtty()
 {
 	return -ENOSYS;
 }
+
 /* This has been patched in fs/namei.c ---- 
 int sys_rename()
 {
@@ -73,21 +74,19 @@ int sys_prof()
  */
 int sys_setregid(int rgid, int egid)
 {
-	if (rgid>0) {
-		if ((current->gid == rgid) || 
-		    suser())
+	if (rgid > 0) {
+		if ((current->gid == rgid) || suser())
 			current->gid = rgid;
 		else
-			return(-EPERM);
+			return (-EPERM);
 	}
-	if (egid>0) {
+	if (egid > 0) {
 		if ((current->gid == egid) ||
-		    (current->egid == egid) ||
-		    suser()) {
+		    (current->egid == egid) || suser()) {
 			current->egid = egid;
 			current->sgid = egid;
 		} else
-			return(-EPERM);
+			return (-EPERM);
 	}
 	return 0;
 }
@@ -131,14 +130,14 @@ int sys_ulimit()
 	return -ENOSYS;
 }
 
-int sys_time(long * tloc)
+int sys_time(long *tloc)
 {
 	int i;
 
 	i = CURRENT_TIME;
 	if (tloc) {
-		verify_area(tloc,4);
-		put_fs_long(i,(unsigned long *)tloc);
+		verify_area(tloc, 4);
+		put_fs_long(i, (unsigned long *)tloc);
 	}
 	return i;
 }
@@ -159,24 +158,20 @@ int sys_time(long * tloc)
 int sys_setreuid(int ruid, int euid)
 {
 	int old_ruid = current->uid;
-	
-	if (ruid>0) {
-		if ((current->euid==ruid) ||
-                    (old_ruid == ruid) ||
-		    suser())
+
+	if (ruid > 0) {
+		if ((current->euid == ruid) || (old_ruid == ruid) || suser())
 			current->uid = ruid;
 		else
-			return(-EPERM);
+			return (-EPERM);
 	}
-	if (euid>0) {
-		if ((old_ruid == euid) ||
-                    (current->euid == euid) ||
-		    suser()) {
+	if (euid > 0) {
+		if ((old_ruid == euid) || (current->euid == euid) || suser()) {
 			current->euid = euid;
 			current->suid = euid;
 		} else {
 			current->uid = old_ruid;
-			return(-EPERM);
+			return (-EPERM);
 		}
 	}
 	return 0;
@@ -201,26 +196,28 @@ int sys_setuid(int uid)
 		current->euid = uid;
 	else
 		return -EPERM;
-	return(0);
+	return (0);
 }
 
-int sys_stime(long * tptr)
+int sys_stime(long *tptr)
 {
 	if (!suser())
 		return -EPERM;
-	startup_time = get_fs_long((unsigned long *)tptr) - jiffies/HZ;
+	startup_time = get_fs_long((unsigned long *)tptr) - jiffies / HZ;
 	jiffies_offset = 0;
 	return 0;
 }
 
-int sys_times(struct tms * tbuf)
+int sys_times(struct tms *tbuf)
 {
 	if (tbuf) {
-		verify_area(tbuf,sizeof *tbuf);
-		put_fs_long(current->utime,(unsigned long *)&tbuf->tms_utime);
-		put_fs_long(current->stime,(unsigned long *)&tbuf->tms_stime);
-		put_fs_long(current->cutime,(unsigned long *)&tbuf->tms_cutime);
-		put_fs_long(current->cstime,(unsigned long *)&tbuf->tms_cstime);
+		verify_area(tbuf, sizeof *tbuf);
+		put_fs_long(current->utime, (unsigned long *)&tbuf->tms_utime);
+		put_fs_long(current->stime, (unsigned long *)&tbuf->tms_stime);
+		put_fs_long(current->cutime,
+			    (unsigned long *)&tbuf->tms_cutime);
+		put_fs_long(current->cstime,
+			    (unsigned long *)&tbuf->tms_cstime);
 	}
 	return jiffies;
 }
@@ -244,7 +241,7 @@ int sys_brk(unsigned long end_data_seg)
  */
 int sys_setpgid(int pid, int pgid)
 {
-	int i; 
+	int i;
 
 	if (!pid)
 		pid = current->pid;
@@ -252,14 +249,13 @@ int sys_setpgid(int pid, int pgid)
 		pgid = current->pid;
 	if (pgid < 0)
 		return -EINVAL;
-	for (i=0 ; i<NR_TASKS ; i++)
+	for (i = 0; i < NR_TASKS; i++)
 		if (task[i] && (task[i]->pid == pid) &&
-		    ((task[i]->p_pptr == current) || 
-		     (task[i] == current))) {
+		    ((task[i]->p_pptr == current) || (task[i] == current))) {
 			if (task[i]->leader)
 				return -EPERM;
 			if ((task[i]->session != current->session) ||
-			    ((pgid != pid) && 
+			    ((pgid != pid) &&
 			     (session_of_pgrp(pgid) != current->session)))
 				return -EPERM;
 			task[i]->pgrp = pgid;
@@ -286,9 +282,9 @@ int sys_setsid(void)
 /*
  * Supplementary group ID's
  */
-int sys_getgroups(int gidsetsize, gid_t *grouplist)
+int sys_getgroups(int gidsetsize, gid_t * grouplist)
 {
-	int	i;
+	int i;
 
 	if (gidsetsize)
 		verify_area(grouplist, sizeof(gid_t) * gidsetsize);
@@ -298,22 +294,22 @@ int sys_getgroups(int gidsetsize, gid_t *grouplist)
 		if (gidsetsize) {
 			if (i >= gidsetsize)
 				return -EINVAL;
-			put_fs_word(current->groups[i], (short *) grouplist);
+			put_fs_word(current->groups[i], (short *)grouplist);
 		}
 	}
-	return(i);
+	return (i);
 }
 
-int sys_setgroups(int gidsetsize, gid_t *grouplist)
+int sys_setgroups(int gidsetsize, gid_t * grouplist)
 {
-	int	i;
+	int i;
 
 	if (!suser())
 		return -EPERM;
 	if (gidsetsize > NGROUPS)
 		return -EINVAL;
 	for (i = 0; i < gidsetsize; i++, grouplist++) {
-		current->groups[i] = get_fs_word((unsigned short *) grouplist);
+		current->groups[i] = get_fs_word((unsigned short *)grouplist);
 	}
 	if (i < NGROUPS)
 		current->groups[i] = NOGROUP;
@@ -322,7 +318,7 @@ int sys_setgroups(int gidsetsize, gid_t *grouplist)
 
 int in_group_p(gid_t grp)
 {
-	int	i;
+	int i;
 
 	if (grp == current->egid)
 		return 1;
@@ -340,14 +336,15 @@ static struct utsname thisname = {
 	UTS_SYSNAME, UTS_NODENAME, UTS_RELEASE, UTS_VERSION, UTS_MACHINE
 };
 
-int sys_uname(struct utsname * name)
+int sys_uname(struct utsname *name)
 {
 	int i;
 
-	if (!name) return -ERROR;
-	verify_area(name,sizeof *name);
-	for(i=0;i<sizeof *name;i++)
-		put_fs_byte(((char *) &thisname)[i],i+(char *) name);
+	if (!name)
+		return -ERROR;
+	verify_area(name, sizeof *name);
+	for (i = 0; i < sizeof *name; i++)
+		put_fs_byte(((char *)&thisname)[i], i + (char *)name);
 	return 0;
 }
 
@@ -356,18 +353,18 @@ int sys_uname(struct utsname * name)
  */
 int sys_sethostname(char *name, int len)
 {
-	int	i;
-	
+	int i;
+
 	if (!suser())
 		return -EPERM;
 	if (len > MAXHOSTNAMELEN)
 		return -EINVAL;
-	for (i=0; i < len; i++) {
-		if ((thisname.nodename[i] = get_fs_byte(name+i)) == 0)
+	for (i = 0; i < len; i++) {
+		if ((thisname.nodename[i] = get_fs_byte(name + i)) == 0)
 			break;
 	}
 	if (thisname.nodename[i]) {
-		thisname.nodename[i>MAXHOSTNAMELEN ? MAXHOSTNAMELEN : i] = 0;
+		thisname.nodename[i > MAXHOSTNAMELEN ? MAXHOSTNAMELEN : i] = 0;
 	}
 	return 0;
 }
@@ -376,12 +373,11 @@ int sys_getrlimit(int resource, struct rlimit *rlim)
 {
 	if (resource >= RLIM_NLIMITS)
 		return -EINVAL;
-	verify_area(rlim,sizeof *rlim);
-	put_fs_long(current->rlim[resource].rlim_cur, 
-		    (unsigned long *) rlim);
-	put_fs_long(current->rlim[resource].rlim_max, 
-		    ((unsigned long *) rlim)+1);
-	return 0;	
+	verify_area(rlim, sizeof *rlim);
+	put_fs_long(current->rlim[resource].rlim_cur, (unsigned long *)rlim);
+	put_fs_long(current->rlim[resource].rlim_max,
+		    ((unsigned long *)rlim) + 1);
+	return 0;
 }
 
 int sys_setrlimit(int resource, struct rlimit *rlim)
@@ -391,11 +387,10 @@ int sys_setrlimit(int resource, struct rlimit *rlim)
 	if (resource >= RLIM_NLIMITS)
 		return -EINVAL;
 	old = current->rlim + resource;
-	new.rlim_cur = get_fs_long((unsigned long *) rlim);
-	new.rlim_max = get_fs_long(((unsigned long *) rlim)+1);
+	new.rlim_cur = get_fs_long((unsigned long *)rlim);
+	new.rlim_max = get_fs_long(((unsigned long *)rlim) + 1);
 	if (((new.rlim_cur > old->rlim_max) ||
-	     (new.rlim_max > old->rlim_max)) &&
-	    !suser())
+	     (new.rlim_max > old->rlim_max)) && !suser())
 		return -EPERM;
 	*old = new;
 	return 0;
@@ -412,12 +407,12 @@ int sys_setrlimit(int resource, struct rlimit *rlim)
 int sys_getrusage(int who, struct rusage *ru)
 {
 	struct rusage r;
-	unsigned long	*lp, *lpend, *dest;
+	unsigned long *lp, *lpend, *dest;
 
 	if (who != RUSAGE_SELF && who != RUSAGE_CHILDREN)
 		return -EINVAL;
 	verify_area(ru, sizeof *ru);
-	memset((char *) &r, 0, sizeof(r));
+	memset((char *)&r, 0, sizeof(r));
 	if (who == RUSAGE_SELF) {
 		r.ru_utime.tv_sec = CT_TO_SECS(current->utime);
 		r.ru_utime.tv_usec = CT_TO_USECS(current->utime);
@@ -433,27 +428,27 @@ int sys_getrusage(int who, struct rusage *ru)
 		r.ru_minflt = current->cmin_flt;
 		r.ru_majflt = current->cmaj_flt;
 	}
-	lp = (unsigned long *) &r;
-	lpend = (unsigned long *) (&r+1);
-	dest = (unsigned long *) ru;
-	for (; lp < lpend; lp++, dest++) 
+	lp = (unsigned long *)&r;
+	lpend = (unsigned long *)(&r + 1);
+	dest = (unsigned long *)ru;
+	for (; lp < lpend; lp++, dest++)
 		put_fs_long(*lp, dest);
-	return(0);
+	return (0);
 }
 
 int sys_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
 	if (tv) {
 		verify_area(tv, sizeof *tv);
-		put_fs_long(startup_time + CT_TO_SECS(jiffies+jiffies_offset),
-			    (unsigned long *) tv);
-		put_fs_long(CT_TO_USECS(jiffies+jiffies_offset), 
-			    ((unsigned long *) tv)+1);
+		put_fs_long(startup_time + CT_TO_SECS(jiffies + jiffies_offset),
+			    (unsigned long *)tv);
+		put_fs_long(CT_TO_USECS(jiffies + jiffies_offset),
+			    ((unsigned long *)tv) + 1);
 	}
 	if (tz) {
 		verify_area(tz, sizeof *tz);
-		put_fs_long(sys_tz.tz_minuteswest, (unsigned long *) tz);
-		put_fs_long(sys_tz.tz_dsttime, ((unsigned long *) tz)+1);
+		put_fs_long(sys_tz.tz_minuteswest, (unsigned long *)tz);
+		put_fs_long(sys_tz.tz_dsttime, ((unsigned long *)tz) + 1);
 	}
 	return 0;
 }
@@ -469,14 +464,14 @@ int sys_gettimeofday(struct timeval *tv, struct timezone *tz)
  */
 int sys_settimeofday(struct timeval *tv, struct timezone *tz)
 {
-	static int	firsttime = 1;
-	void 		adjust_clock();
+	static int firsttime = 1;
+	void adjust_clock();
 
 	if (!suser())
 		return -EPERM;
 	if (tz) {
-		sys_tz.tz_minuteswest = get_fs_long((unsigned long *) tz);
-		sys_tz.tz_dsttime = get_fs_long(((unsigned long *) tz)+1);
+		sys_tz.tz_minuteswest = get_fs_long((unsigned long *)tz);
+		sys_tz.tz_dsttime = get_fs_long(((unsigned long *)tz) + 1);
 		if (firsttime) {
 			firsttime = 0;
 			if (!tv)
@@ -487,10 +482,10 @@ int sys_settimeofday(struct timeval *tv, struct timezone *tz)
 		int sec, usec;
 
 		sec = get_fs_long((unsigned long *)tv);
-		usec = get_fs_long(((unsigned long *)tv)+1);
-	
-		startup_time = sec - jiffies/HZ;
-		jiffies_offset = usec * HZ / 1000000 - jiffies%HZ;
+		usec = get_fs_long(((unsigned long *)tv) + 1);
+
+		startup_time = sec - jiffies / HZ;
+		jiffies_offset = usec * HZ / 1000000 - jiffies % HZ;
 	}
 	return 0;
 }
@@ -513,7 +508,7 @@ int sys_settimeofday(struct timeval *tv, struct timezone *tz)
  */
 void adjust_clock()
 {
-	startup_time += sys_tz.tz_minuteswest*60;
+	startup_time += sys_tz.tz_minuteswest * 60;
 }
 
 int sys_umask(int mask)
@@ -523,4 +518,3 @@ int sys_umask(int mask)
 	current->umask = mask & 0777;
 	return (old);
 }
-

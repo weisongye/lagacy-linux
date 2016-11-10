@@ -60,12 +60,12 @@ void __math_abort(struct info *, unsigned int);
  */
 
 typedef struct {
-	long a,b;
+	long a, b;
 	short exponent;
 } temp_real;
 
 typedef struct {
-	short m0,m1,m2,m3;
+	short m0, m1, m2, m3;
 	short exponent;
 } temp_real_unaligned;
 
@@ -73,13 +73,13 @@ typedef struct {
 ((*(long long *) (b) = *(long long *) (a)),((b)->exponent = (a)->exponent))
 
 typedef struct {
-	long a,b;
+	long a, b;
 } long_real;
 
 typedef long short_real;
 
 typedef struct {
-	long a,b;
+	long a, b;
 	short sign;
 } temp_int;
 
@@ -136,7 +136,7 @@ struct swd {
 
 /* ea.c */
 
-char * ea(struct info * __info, unsigned short __code);
+char *ea(struct info *__info, unsigned short __code);
 
 /* convert.c */
 

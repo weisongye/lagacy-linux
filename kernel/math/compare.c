@@ -23,9 +23,8 @@ static void normalize(temp_real * a)
 	}
 	while (i && a->b >= 0) {
 		i--;
-		__asm__("addl %0,%0 ; adcl %1,%1"
-			:"=r" (a->a),"=r" (a->b)
-			:"0" (a->a),"1" (a->b));
+__asm__("addl %0,%0 ; adcl %1,%1":"=r"(a->a), "=r"(a->b)
+:			"0"(a->a), "1"(a->b));
 	}
 	a->exponent = i | sign;
 }
@@ -50,11 +49,11 @@ void fcom(const temp_real * src1, const temp_real * src2)
 
 	a = *src1;
 	a.exponent ^= 0x8000;
-	fadd(&a,src2,&a);
+	fadd(&a, src2, &a);
 	ftst(&a);
 }
 
 void fucom(const temp_real * src1, const temp_real * src2)
 {
-	fcom(src1,src2);
+	fcom(src1, src2);
 }

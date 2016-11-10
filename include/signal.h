@@ -4,7 +4,7 @@
 #include <sys/types.h>
 
 typedef int sig_atomic_t;
-typedef unsigned int sigset_t;		/* 32 bits */
+typedef unsigned int sigset_t;	/* 32 bits */
 
 #define _NSIG             32
 #define NSIG		_NSIG
@@ -53,23 +53,23 @@ typedef unsigned int sigset_t;		/* 32 bits */
 #endif
 
 struct sigaction {
-	void (*sa_handler)(int);
+	void (*sa_handler) (int);
 	sigset_t sa_mask;
 	int sa_flags;
-	void (*sa_restorer)(void);
+	void (*sa_restorer) (void);
 };
 
-void (*signal(int _sig, void (*_func)(int)))(int);
+void (*signal(int _sig, void (*_func) (int))) (int);
 int raise(int sig);
 int kill(pid_t pid, int sig);
-int sigaddset(sigset_t *mask, int signo);
-int sigdelset(sigset_t *mask, int signo);
-int sigemptyset(sigset_t *mask);
-int sigfillset(sigset_t *mask);
-int sigismember(sigset_t *mask, int signo); /* 1 - is, 0 - not, -1 error */
-int sigpending(sigset_t *set);
-int sigprocmask(int how, sigset_t *set, sigset_t *oldset);
-int sigsuspend(sigset_t *sigmask);
+int sigaddset(sigset_t * mask, int signo);
+int sigdelset(sigset_t * mask, int signo);
+int sigemptyset(sigset_t * mask);
+int sigfillset(sigset_t * mask);
+int sigismember(sigset_t * mask, int signo);	/* 1 - is, 0 - not, -1 error */
+int sigpending(sigset_t * set);
+int sigprocmask(int how, sigset_t * set, sigset_t * oldset);
+int sigsuspend(sigset_t * sigmask);
 int sigaction(int sig, struct sigaction *act, struct sigaction *oldact);
 
 #endif /* _SIGNAL_H */

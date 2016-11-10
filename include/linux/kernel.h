@@ -1,15 +1,15 @@
 /*
  * 'kernel.h' contains some often-used function prototypes etc
  */
-void verify_area(void * addr,int count);
-volatile void panic(const char * str);
+void verify_area(void *addr, int count);
+volatile void panic(const char *str);
 volatile void do_exit(long error_code);
-int printf(const char * fmt, ...);
-int printk(const char * fmt, ...);
-void console_print(const char * str);
-int tty_write(unsigned ch,char * buf,int count);
-void * malloc(unsigned int size);
-void free_s(void * obj, int size);
+int printf(const char *fmt, ...);
+int printk(const char *fmt, ...);
+void console_print(const char *str);
+int tty_write(unsigned ch, char *buf, int count);
+void *malloc(unsigned int size);
+void free_s(void *obj, int size);
 extern void hd_times_out(void);
 extern void sysbeepstop(void);
 extern void blank_screen(void);
@@ -30,4 +30,3 @@ extern int blankcount;
  * permissions checks first, and check suser() last.
  */
 #define suser() (current->euid == 0)
-

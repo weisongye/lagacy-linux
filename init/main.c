@@ -20,27 +20,22 @@
  * won't be any messing with the stack from main(), but we define
  * some others too.
  */
-static inline _syscall0(int,fork)
-static inline _syscall0(int,pause)
-static inline _syscall1(int,setup,void *,BIOS)
-static inline _syscall0(int,sync)
-
+static inline _syscall0(int, fork)
+static inline _syscall0(int, pause)
+static inline _syscall1(int, setup, void *, BIOS)
+static inline _syscall0(int, sync)
 #include <linux/tty.h>
 #include <linux/sched.h>
 #include <linux/head.h>
 #include <asm/system.h>
 #include <asm/io.h>
-
 #include <stddef.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
 #include <linux/fs.h>
-
 #include <string.h>
-
 static char printbuf[1024];
 
 extern char *strcpy();
@@ -52,9 +47,9 @@ extern void hd_init(void);
 extern void floppy_init(void);
 extern void mem_init(long start, long end);
 extern long rd_init(long mem_start, int length);
-extern long kernel_mktime(struct tm * tm);
+extern long kernel_mktime(struct tm *tm);
 
-static int sprintf(char * str, const char *fmt, ...)
+static int sprintf(char *str, const char *fmt, ...)
 {
 	va_list args;
 	int i;
@@ -116,45 +111,47 @@ static long buffer_memory_end = 0;
 static long main_memory_start = 0;
 static char term[32];
 
-static char * argv_init[] = { "/etc/init", NULL };
-static char * envp_init[] = { "HOME=/", NULL,NULL };
+static char *argv_init[] = { "/etc/init", NULL };
+static char *envp_init[] = { "HOME=/", NULL, NULL };
 
-static char * argv_rc[] = { "/bin/sh", NULL };
-static char * envp_rc[] = { "HOME=/", NULL ,NULL };
+static char *argv_rc[] = { "/bin/sh", NULL };
+static char *envp_rc[] = { "HOME=/", NULL, NULL };
 
-static char * argv[] = { "-/bin/sh",NULL };
-static char * envp[] = { "HOME=/root", NULL, NULL };
+static char *argv[] = { "-/bin/sh", NULL };
+static char *envp[] = { "HOME=/root", NULL, NULL };
 
-struct drive_info { char dummy[32]; } drive_info;
+struct drive_info {
+	char dummy[32];
+} drive_info;
 
-void main(void)		/* This really IS void, no error here. */
-{			/* The startup routine assumes (well, ...) this */
+void main(void)
+{				/* This really IS void, no error here. *//* The startup routine assumes (well, ...) this */
 /*
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
- 	ROOT_DEV = ORIG_ROOT_DEV;
- 	SWAP_DEV = ORIG_SWAP_DEV;
+	ROOT_DEV = ORIG_ROOT_DEV;
+	SWAP_DEV = ORIG_SWAP_DEV;
 	sprintf(term, "TERM=con%dx%d", CON_COLS, CON_ROWS);
-	envp[1] = term;	
+	envp[1] = term;
 	envp_rc[1] = term;
 	envp_init[1] = term;
- 	drive_info = DRIVE_INFO;
-	memory_end = (1<<20) + (EXT_MEM_K<<10);
+	drive_info = DRIVE_INFO;
+	memory_end = (1 << 20) + (EXT_MEM_K << 10);
 	memory_end &= 0xfffff000;
-	if (memory_end > 16*1024*1024)
-		memory_end = 16*1024*1024;
-	if (memory_end > 12*1024*1024) 
-		buffer_memory_end = 4*1024*1024;
-	else if (memory_end > 6*1024*1024)
-		buffer_memory_end = 2*1024*1024;
+	if (memory_end > 16 * 1024 * 1024)
+		memory_end = 16 * 1024 * 1024;
+	if (memory_end > 12 * 1024 * 1024)
+		buffer_memory_end = 4 * 1024 * 1024;
+	else if (memory_end > 6 * 1024 * 1024)
+		buffer_memory_end = 2 * 1024 * 1024;
 	else
-		buffer_memory_end = 1*1024*1024;
+		buffer_memory_end = 1 * 1024 * 1024;
 	main_memory_start = buffer_memory_end;
 #ifdef RAMDISK
-	main_memory_start += rd_init(main_memory_start, RAMDISK*1024);
+	main_memory_start += rd_init(main_memory_start, RAMDISK * 1024);
 #endif
-	mem_init(main_memory_start,memory_end);
+	mem_init(main_memory_start, memory_end);
 	trap_init();
 	blk_dev_init();
 	chr_dev_init();
@@ -176,8 +173,8 @@ void main(void)		/* This really IS void, no error here. */
  * can run). For task0 'pause()' just means we go check if some other
  * task can run, and if not we return here.
  */
-	for(;;)
-		__asm__("int $0x80"::"a" (__NR_pause):) ;
+	for (;;)
+__asm__("int $0x80"::"a"(__NR_pause):);
 }
 
 static int printw(const char *fmt, ...)
@@ -186,53 +183,55 @@ static int printw(const char *fmt, ...)
 	int i;
 
 	va_start(args, fmt);
-	write(1,printbuf,i=vsprintf(printbuf, fmt, args));
+	write(1, printbuf, i = vsprintf(printbuf, fmt, args));
 	va_end(args);
 	return i;
 }
 
 void init(void)
 {
-	int pid,i;
+	int pid, i;
 
-	setup((void *) &drive_info);
-	(void) open("/dev/tty1",O_RDWR,0);
-	(void) dup(0);
-	(void) dup(0);
-	printw("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
-		NR_BUFFERS*BLOCK_SIZE);
-	printw("Free mem: %d bytes\n\r",memory_end-main_memory_start);
+	setup((void *)&drive_info);
+	(void)open("/dev/tty1", O_RDWR, 0);
+	(void)dup(0);
+	(void)dup(0);
+	printw("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS,
+	       NR_BUFFERS * BLOCK_SIZE);
+	printw("Free mem: %d bytes\n\r", memory_end - main_memory_start);
 
-	execve("/etc/init", argv_init,envp_init); /* if fail, go orignal */
+	execve("/etc/init", argv_init, envp_init);	/* if fail, go orignal */
 
-	if (!(pid=fork())) {
+	if (!(pid = fork())) {
 		close(0);
-		if (open("/etc/rc",O_RDONLY,0))
+		if (open("/etc/rc", O_RDONLY, 0))
 			_exit(1);
-		execve("/bin/sh",argv_rc,envp_rc);
+		execve("/bin/sh", argv_rc, envp_rc);
 		_exit(2);
 	}
-	if (pid>0)
+	if (pid > 0)
 		while (pid != wait(&i))
-			/* nothing */;
+			/* nothing */ ;
 	while (1) {
-		if ((pid=fork())<0) {
+		if ((pid = fork()) < 0) {
 			printw("Fork failed in init\r\n");
 			continue;
 		}
 		if (!pid) {
-			close(0);close(1);close(2);
+			close(0);
+			close(1);
+			close(2);
 			setsid();
-			(void) open("/dev/tty1",O_RDWR,0);
-			(void) dup(0);
-			(void) dup(0);
-			_exit(execve("/bin/sh",argv,envp));
+			(void)open("/dev/tty1", O_RDWR, 0);
+			(void)dup(0);
+			(void)dup(0);
+			_exit(execve("/bin/sh", argv, envp));
 		}
 		while (1)
 			if (pid == wait(&i))
 				break;
-		printw("\n\rchild %d died with code %04x\n\r",pid,i);
+		printw("\n\rchild %d died with code %04x\n\r", pid, i);
 		sync();
 	}
-	_exit(0);	/* NOTE! _exit, not exit() */
+	_exit(0);		/* NOTE! _exit, not exit() */
 }

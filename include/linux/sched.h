@@ -35,12 +35,12 @@
  *    the EXP_n values would be 1981, 2034 and 2043 if still using only
  *    11 bit fractions.
  */
-#define FSHIFT 		11		/* nr of bits of precision */
+#define FSHIFT 		11	/* nr of bits of precision */
 #define FIXED_1		(1<<FSHIFT)	/* 1.0 as fixed-point */
-#define LOAD_FREQ	(5*HZ)		/* 5 sec intervals */
-#define EXP_1		1884		/* 1/exp(5sec/1min) as fixed-point */
-#define EXP_5		2014		/* 1/exp(5sec/5min) */
-#define EXP_15		2037		/* 1/exp(5sec/15min) */
+#define LOAD_FREQ	(5*HZ)	/* 5 sec intervals */
+#define EXP_1		1884	/* 1/exp(5sec/1min) as fixed-point */
+#define EXP_5		2014	/* 1/exp(5sec/5min) */
+#define EXP_15		2037	/* 1/exp(5sec/15min) */
 
 #define CALC_LOAD(load,exp,n) \
 	load *= exp; \
@@ -81,75 +81,75 @@ extern int free_page_tables(unsigned long from, unsigned long size);
 extern void sched_init(void);
 extern void schedule(void);
 extern void trap_init(void);
-extern void panic(const char * str);
-extern int tty_write(unsigned minor,char * buf,int count);
+extern void panic(const char *str);
+extern int tty_write(unsigned minor, char *buf, int count);
 
-typedef int (*fn_ptr)();
+typedef int (*fn_ptr) ();
 
 struct i387_struct {
-	long	cwd;
-	long	swd;
-	long	twd;
-	long	fip;
-	long	fcs;
-	long	foo;
-	long	fos;
-	long	st_space[20];	/* 8*10 bytes for each FP-reg = 80 bytes */
+	long cwd;
+	long swd;
+	long twd;
+	long fip;
+	long fcs;
+	long foo;
+	long fos;
+	long st_space[20];	/* 8*10 bytes for each FP-reg = 80 bytes */
 };
 
 struct tss_struct {
-	long	back_link;	/* 16 high bits zero */
-	long	esp0;
-	long	ss0;		/* 16 high bits zero */
-	long	esp1;
-	long	ss1;		/* 16 high bits zero */
-	long	esp2;
-	long	ss2;		/* 16 high bits zero */
-	long	cr3;
-	long	eip;
-	long	eflags;
-	long	eax,ecx,edx,ebx;
-	long	esp;
-	long	ebp;
-	long	esi;
-	long	edi;
-	long	es;		/* 16 high bits zero */
-	long	cs;		/* 16 high bits zero */
-	long	ss;		/* 16 high bits zero */
-	long	ds;		/* 16 high bits zero */
-	long	fs;		/* 16 high bits zero */
-	long	gs;		/* 16 high bits zero */
-	long	ldt;		/* 16 high bits zero */
-	long	trace_bitmap;	/* bits: trace 0, bitmap 16-31 */
+	long back_link;		/* 16 high bits zero */
+	long esp0;
+	long ss0;		/* 16 high bits zero */
+	long esp1;
+	long ss1;		/* 16 high bits zero */
+	long esp2;
+	long ss2;		/* 16 high bits zero */
+	long cr3;
+	long eip;
+	long eflags;
+	long eax, ecx, edx, ebx;
+	long esp;
+	long ebp;
+	long esi;
+	long edi;
+	long es;		/* 16 high bits zero */
+	long cs;		/* 16 high bits zero */
+	long ss;		/* 16 high bits zero */
+	long ds;		/* 16 high bits zero */
+	long fs;		/* 16 high bits zero */
+	long gs;		/* 16 high bits zero */
+	long ldt;		/* 16 high bits zero */
+	long trace_bitmap;	/* bits: trace 0, bitmap 16-31 */
 	struct i387_struct i387;
 };
 
 struct task_struct {
 /* these are hardcoded - don't touch */
-	long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
+	long state;		/* -1 unrunnable, 0 runnable, >0 stopped */
 	long counter;
 	long priority;
 	long signal;
 	struct sigaction sigaction[32];
-	long blocked;	/* bitmap of masked signals */
+	long blocked;		/* bitmap of masked signals */
 /* various fields */
 	int exit_code;
-	unsigned long start_code,end_code,end_data,brk,start_stack;
-	long pid,pgrp,session,leader;
-	int	groups[NGROUPS];
+	unsigned long start_code, end_code, end_data, brk, start_stack;
+	long pid, pgrp, session, leader;
+	int groups[NGROUPS];
 	/* 
 	 * pointers to parent process, youngest child, younger sibling,
 	 * older sibling, respectively.  (p->father can be replaced with 
 	 * p->p_pptr->pid)
 	 */
-	struct task_struct	*p_pptr, *p_cptr, *p_ysptr, *p_osptr;
-	unsigned short uid,euid,suid;
-	unsigned short gid,egid,sgid;
-	unsigned long timeout,alarm;
-	long utime,stime,cutime,cstime,start_time;
+	struct task_struct *p_pptr, *p_cptr, *p_ysptr, *p_osptr;
+	unsigned short uid, euid, suid;
+	unsigned short gid, egid, sgid;
+	unsigned long timeout, alarm;
+	long utime, stime, cutime, cstime, start_time;
 	unsigned long min_flt, maj_flt;
 	unsigned long cmin_flt, cmaj_flt;
-	struct rlimit rlim[RLIM_NLIMITS]; 
+	struct rlimit rlim[RLIM_NLIMITS];
 	unsigned int flags;	/* per process flags, defined below */
 	unsigned short used_math;
 	unsigned short rss;	/* number of resident pages */
@@ -157,12 +157,12 @@ struct task_struct {
 /* file system info */
 	int tty;		/* -1 if no tty, so it must be signed */
 	unsigned short umask;
-	struct m_inode * pwd;
-	struct m_inode * root;
-	struct m_inode * executable;
-	struct m_inode * library;
+	struct m_inode *pwd;
+	struct m_inode *root;
+	struct m_inode *executable;
+	struct m_inode *library;
 	unsigned long close_on_exec;
-	struct file * filp[NR_OPEN];
+	struct file *filp[NR_OPEN];
 /* ldt for this task 0 - zero 1 - cs 2 - ds&ss */
 	struct desc_struct ldt[3];
 /* tss for this task */
@@ -173,7 +173,7 @@ struct task_struct {
  * Per process flags
  */
 #define PF_ALIGNWARN	0x00000001	/* Print alignment warning msgs */
-					/* Not implemented yet, only for 486*/
+					/* Not implemented yet, only for 486 */
 
 /*
  *  INIT_TASK is used to set up the first task table, touch at
@@ -220,10 +220,10 @@ extern int jiffies_offset;
 
 #define CURRENT_TIME (startup_time+(jiffies+jiffies_offset)/HZ)
 
-extern void add_timer(long jiffies, void (*fn)(void));
-extern void sleep_on(struct task_struct ** p);
-extern void interruptible_sleep_on(struct task_struct ** p);
-extern void wake_up(struct task_struct ** p);
+extern void add_timer(long jiffies, void (*fn) (void));
+extern void sleep_on(struct task_struct **p);
+extern void interruptible_sleep_on(struct task_struct **p);
+extern void wake_up(struct task_struct **p);
 extern int in_group_p(gid_t grp);
 
 /*

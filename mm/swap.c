@@ -28,11 +28,11 @@ __asm__ __volatile__("bt" op " %1,%2; adcl $0,%0" \
 return __res; \
 }
 
-bitop(bit,"")
-bitop(setbit,"s")
-bitop(clrbit,"r")
+bitop(bit, "")
+    bitop(setbit, "s")
+    bitop(clrbit, "r")
 
-static char * swap_bitmap = NULL;
+static char *swap_bitmap = NULL;
 int SWAP_DEV = 0;
 
 /*
@@ -49,8 +49,8 @@ static int get_swap_page(void)
 
 	if (!swap_bitmap)
 		return 0;
-	for (nr = 1; nr < 32768 ; nr++)
-		if (clrbit(swap_bitmap,nr))
+	for (nr = 1; nr < 32768; nr++)
+		if (clrbit(swap_bitmap, nr))
 			return nr;
 	return 0;
 }
@@ -60,7 +60,7 @@ void swap_free(int swap_nr)
 	if (!swap_nr)
 		return;
 	if (swap_bitmap && swap_nr < SWAP_BITS)
-		if (!setbit(swap_bitmap,swap_nr))
+		if (!setbit(swap_bitmap, swap_nr))
 			return;
 	printk("Swap-space bad (swap_free())\n\r");
 	return;
@@ -86,13 +86,13 @@ void swap_in(unsigned long *table_ptr)
 	}
 	if (!(page = get_free_page()))
 		oom();
-	read_swap_page(swap_nr, (char *) page);
-	if (setbit(swap_bitmap,swap_nr))
+	read_swap_page(swap_nr, (char *)page);
+	if (setbit(swap_bitmap, swap_nr))
 		printk("swapping in multiply from same page\n\r");
 	*table_ptr = page | (PAGE_DIRTY | 7);
 }
 
-int try_to_swap_out(unsigned long * table_ptr)
+int try_to_swap_out(unsigned long *table_ptr)
 {
 	unsigned long page;
 	unsigned long swap_nr;
@@ -108,9 +108,9 @@ int try_to_swap_out(unsigned long * table_ptr)
 			return 0;
 		if (!(swap_nr = get_swap_page()))
 			return 0;
-		*table_ptr = swap_nr<<1;
+		*table_ptr = swap_nr << 1;
 		invalidate();
-		write_swap_page(swap_nr, (char *) page);
+		write_swap_page(swap_nr, (char *)page);
 		free_page(page);
 		return 1;
 	}
@@ -127,19 +127,19 @@ int try_to_swap_out(unsigned long * table_ptr)
  */
 int swap_out(void)
 {
-	static int dir_entry = FIRST_VM_PAGE>>10;
+	static int dir_entry = FIRST_VM_PAGE >> 10;
 	static int page_entry = -1;
 	int counter = VM_PAGES;
 	int pg_table = 0, d_entry;
 
-	while (counter>0) {
+	while (counter > 0) {
 		pg_table = pg_dir[dir_entry];
 		if (pg_table & 1)
 			break;
 		counter -= 1024;
 		dir_entry++;
 		if (dir_entry >= 1024)
-			dir_entry = FIRST_VM_PAGE>>10;
+			dir_entry = FIRST_VM_PAGE >> 10;
 	}
 	d_entry = dir_entry;
 	pg_table &= 0xfffff000;
@@ -147,19 +147,19 @@ int swap_out(void)
 		page_entry++;
 		if (page_entry >= 1024) {
 			page_entry = 0;
-		repeat:
+repeat:
 			dir_entry++;
 			if (dir_entry >= 1024)
-				dir_entry = FIRST_VM_PAGE>>10;
+				dir_entry = FIRST_VM_PAGE >> 10;
 			pg_table = pg_dir[dir_entry];
-			if (!(pg_table&1))
+			if (!(pg_table & 1))
 				if ((counter -= 1024) > 0)
 					goto repeat;
 				else
 					break;
 			pg_table &= 0xfffff000;
 		}
-		if (try_to_swap_out(page_entry + (unsigned long *) pg_table)) {
+		if (try_to_swap_out(page_entry + (unsigned long *)pg_table)) {
 			--task[d_entry >> 4]->rss;
 			return 1;
 		}
@@ -174,24 +174,13 @@ int swap_out(void)
  */
 unsigned long get_free_page(void)
 {
-register unsigned long __res asm("ax");
+	register unsigned long __res asm("ax");
 
 repeat:
-	__asm__("std ; repne ; scasb\n\t"
-		"jne 1f\n\t"
-		"movb $1,1(%%edi)\n\t"
-		"sall $12,%%ecx\n\t"
-		"addl %2,%%ecx\n\t"
-		"movl %%ecx,%%edx\n\t"
-		"movl $1024,%%ecx\n\t"
-		"leal 4092(%%edx),%%edi\n\t"
-		"rep ; stosl\n\t"
-		"movl %%edx,%%eax\n"
-		"1:"
-		:"=a" (__res)
-		:"0" (0),"i" (LOW_MEM),"c" (PAGING_PAGES),
-		"D" (mem_map+PAGING_PAGES-1)
-		:) ;
+__asm__("std ; repne ; scasb\n\t" "jne 1f\n\t" "movb $1,1(%%edi)\n\t" "sall $12,%%ecx\n\t" "addl %2,%%ecx\n\t" "movl %%ecx,%%edx\n\t" "movl $1024,%%ecx\n\t" "leal 4092(%%edx),%%edi\n\t" "rep ; stosl\n\t" "movl %%edx,%%eax\n" "1:":"=a"(__res)
+:		"0"(0), "i"(LOW_MEM), "c"(PAGING_PAGES),
+		"D"(mem_map + PAGING_PAGES - 1)
+:	    );
 	if (__res >= HIGH_MEMORY)
 		goto repeat;
 	if (!__res && swap_out())
@@ -202,7 +191,7 @@ repeat:
 void init_swapping(void)
 {
 	extern int *blk_size[];
-	int swap_size,i,j;
+	int swap_size, i, j;
 
 	if (!SWAP_DEV)
 		return;
@@ -214,43 +203,44 @@ void init_swapping(void)
 	if (!swap_size)
 		return;
 	if (swap_size < 100) {
-		printk("Swap device too small (%d blocks)\n\r",swap_size);
+		printk("Swap device too small (%d blocks)\n\r", swap_size);
 		return;
 	}
 	swap_size >>= 2;
 	if (swap_size > SWAP_BITS)
 		swap_size = SWAP_BITS;
-	swap_bitmap = (char *) get_free_page();
+	swap_bitmap = (char *)get_free_page();
 	if (!swap_bitmap) {
 		printk("Unable to start swapping: out of memory :-)\n\r");
 		return;
 	}
-	read_swap_page(0,swap_bitmap);
-	if (strncmp("SWAP-SPACE",swap_bitmap+4086,10)) {
+	read_swap_page(0, swap_bitmap);
+	if (strncmp("SWAP-SPACE", swap_bitmap + 4086, 10)) {
 		printk("Unable to find swap-space signature\n\r");
-		free_page((long) swap_bitmap);
+		free_page((long)swap_bitmap);
 		swap_bitmap = NULL;
 		return;
 	}
-	memset(swap_bitmap+4086,0,10);
-	for (i = 0 ; i < SWAP_BITS ; i++) {
+	memset(swap_bitmap + 4086, 0, 10);
+	for (i = 0; i < SWAP_BITS; i++) {
 		if (i == 1)
 			i = swap_size;
-		if (bit(swap_bitmap,i)) {
+		if (bit(swap_bitmap, i)) {
 			printk("Bad swap-space bit-map\n\r");
-			free_page((long) swap_bitmap);
+			free_page((long)swap_bitmap);
 			swap_bitmap = NULL;
 			return;
 		}
 	}
 	j = 0;
-	for (i = 1 ; i < swap_size ; i++)
-		if (bit(swap_bitmap,i))
+	for (i = 1; i < swap_size; i++)
+		if (bit(swap_bitmap, i))
 			j++;
 	if (!j) {
-		free_page((long) swap_bitmap);
+		free_page((long)swap_bitmap);
 		swap_bitmap = NULL;
 		return;
 	}
-	printk("Swap device ok: %d pages (%d bytes) swap-space\n\r",j,j*4096);
+	printk("Swap device ok: %d pages (%d bytes) swap-space\n\r", j,
+	       j * 4096);
 }
