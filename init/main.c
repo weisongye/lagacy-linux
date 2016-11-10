@@ -177,10 +177,10 @@ void main(void)		/* This really IS void, no error here. */
  * task can run, and if not we return here.
  */
 	for(;;)
-		__asm__("int $0x80"::"a" (__NR_pause):"ax");
+		__asm__("int $0x80"::"a" (__NR_pause):) ;
 }
 
-static int printf(const char *fmt, ...)
+static int printw(const char *fmt, ...)
 {
 	va_list args;
 	int i;
@@ -199,9 +199,9 @@ void init(void)
 	(void) open("/dev/tty1",O_RDWR,0);
 	(void) dup(0);
 	(void) dup(0);
-	printf("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
+	printw("%d buffers = %d bytes buffer space\n\r",NR_BUFFERS,
 		NR_BUFFERS*BLOCK_SIZE);
-	printf("Free mem: %d bytes\n\r",memory_end-main_memory_start);
+	printw("Free mem: %d bytes\n\r",memory_end-main_memory_start);
 
 	execve("/etc/init", argv_init,envp_init); /* if fail, go orignal */
 
@@ -217,7 +217,7 @@ void init(void)
 			/* nothing */;
 	while (1) {
 		if ((pid=fork())<0) {
-			printf("Fork failed in init\r\n");
+			printw("Fork failed in init\r\n");
 			continue;
 		}
 		if (!pid) {
@@ -231,7 +231,7 @@ void init(void)
 		while (1)
 			if (pid == wait(&i))
 				break;
-		printf("\n\rchild %d died with code %04x\n\r",pid,i);
+		printw("\n\rchild %d died with code %04x\n\r",pid,i);
 		sync();
 	}
 	_exit(0);	/* NOTE! _exit, not exit() */

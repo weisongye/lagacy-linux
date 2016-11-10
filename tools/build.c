@@ -48,6 +48,9 @@
 
 #define STRINGIFY(x) #x
 
+#define MAJOR(a) (((unsigned)(a))>>8)
+#define MINOR(a) ((a)&0xff)
+
 void die(char * str)
 {
 	fprintf(stderr,"%s\n",str);
@@ -185,8 +188,6 @@ int main(int argc, char ** argv)
 		die("Unable to open 'system'");
 	if (read(id,buf,GCC_HEADER) != GCC_HEADER)
 		die("Unable to read header of 'system'");
-	if (((long *) buf)[5] != 0)
-		die("Non-GCC header of 'system'");
 	for (i=0 ; (c=read(id,buf,sizeof buf))>0 ; i+=c )
 		if (write(1,buf,c)!=c)
 			die("Write call failed");

@@ -88,6 +88,8 @@ static int rw_mem(int rw,char * buf, int count, off_t * pos)
 static int rw_kmem(int rw,char * buf, int count, off_t * pos)
 {
 	char *p=(char *) *pos;
+	char *p_tmp = NULL;
+	char *buf_tmp = NULL;
 
 	if ((unsigned long) *pos > HIGH_MEMORY)
 		return 0;
@@ -96,9 +98,16 @@ static int rw_kmem(int rw,char * buf, int count, off_t * pos)
 
 	switch (rw) {
 		case READ:
-			while ((count -= 4) >=0)
-				put_fs_long(*((unsigned long *) p)++,
-						((unsigned long *) buf)++);
+			while ((count -= 4) >=0) {
+				p_tmp = p;
+				p_tmp++;
+				buf_tmp = buf;
+				buf_tmp++;
+				put_fs_long(*((unsigned long *) p),
+						((unsigned long *) buf));
+				p = p_tmp;
+				buf = buf_tmp;
+			}
 			count += 4;
 			while (--count >= 0)
 				put_fs_byte(*p++, buf++);
